@@ -36,8 +36,8 @@ def main():
                 palabra = input("Buscar palabra: ")
                 t = gestor.buscar(palabra)
                 if t:
-                    print(f"\n{t['palabra']}: {t['definicion']}")
-                    for ej in t['ejemplos']:
+                    print(f"\n{t.palabra}: {t.definicion}")
+                    for ej in t.ejemplos:
                         print(f" - {ej}")
                 else:
                     print("❌ No encontrado.")
@@ -45,8 +45,8 @@ def main():
             case "3":
                 terminos = gestor.listar_todos()
                 for t in terminos:
-                    print(f"{t['palabra']}: {t['definicion']}")
-                    for ej in t['ejemplos']:
+                    print(f"{t.palabra}: {t.definicion}")
+                    for ej in t.ejemplos:
                         print(f" - {ej}")
 
             case "4":

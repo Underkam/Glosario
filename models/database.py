@@ -1,13 +1,14 @@
 import sqlite3
+from models.termino import Termino
 
 class Database:
     def __init__(self, db_name="glosario.db"):
         self.conn = sqlite3.connect(db_name)
-        self.cursor = self.conn.cursor()
         self.crear_tabla()
 
     def crear_tabla(self):
-        self.cursor.execute('''
+        cursor = self.conn.cursor()
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS terminos (
                 palabra TEXT PRIMARY KEY,
                 definicion TEXT,
@@ -16,32 +17,40 @@ class Database:
         ''')
         self.conn.commit()
 
-    def agregar(self, palabra, definicion, ejemplos):
-        self.cursor.execute(
+    def insertar_termino(self, termino: Termino):
+        cursor = self.conn.cursor()
+        ejemplos_str = ",".join(termino.ejemplos)
+        cursor.execute(
             "INSERT OR REPLACE INTO terminos (palabra, definicion, ejemplos) VALUES (?, ?, ?)",
-            (palabra, definicion, ",".join(ejemplos))
+            (termino.palabra, termino.definicion, ejemplos_str)
         )
         self.conn.commit()
-
-    def buscar(self, palabra):
-        self.cursor.execute("SELECT palabra, definicion, ejemplos FROM terminos WHERE palabra = ?", (palabra,))
-        row = self.cursor.fetchone()
-        if row:
-            return {"palabra": row[0], "definicion": row[1], "ejemplos": row[2].split(",")}
-        return None
 
     def listar_todos(self):
-        self.cursor.execute("SELECT palabra, definicion, ejemplos FROM terminos")
-        rows = self.cursor.fetchall()
-        return [{"palabra": r[0], "definicion": r[1], "ejemplos": r[2].split(",")} for r in rows]
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT palabra, definicion, ejemplos FROM terminos ORDER BY palabra ASC")
+        rows = cursor.fetchall()
+        terminos = [Termino(row[0], row[1], row[2].split(',') if row[2] else []) for row in rows]
+        return terminos
 
-    def actualizar(self, palabra, nueva_def, nuevos_ej):
-        self.cursor.execute(
+    def buscar_termino(self, palabra):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT palabra, definicion, ejemplos FROM terminos WHERE palabra=?", (palabra,))
+        row = cursor.fetchone()
+        if row:
+            return Termino(row[0], row[1], row[2].split(',') if row[2] else [])
+        return None
+
+    def editar_termino(self, palabra, nueva_def, nuevos_ej):
+        cursor = self.conn.cursor()
+        ejemplos_str = ",".join(nuevos_ej)
+        cursor.execute(
             "UPDATE terminos SET definicion=?, ejemplos=? WHERE palabra=?",
-            (nueva_def, ",".join(nuevos_ej), palabra)
+            (nueva_def, ejemplos_str, palabra)
         )
         self.conn.commit()
 
-    def eliminar(self, palabra):
-        self.cursor.execute("DELETE FROM terminos WHERE palabra=?", (palabra,))
+    def eliminar_termino(self, palabra):
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM terminos WHERE palabra=?", (palabra,))
         self.conn.commit()
